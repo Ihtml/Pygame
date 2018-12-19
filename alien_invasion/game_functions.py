@@ -6,6 +6,7 @@ import sys
 import pygame
 
 from bullet import Bullet
+from alien import Alien
 
 def check_keydown_events(event, ai_settings, screen, ship, bullets):
     # 响应按键
@@ -48,7 +49,7 @@ def check_events(ai_settings, screen, ship, bullets):
             check_keyup_events(event, ship)
 
 
-def update_screen(ai_settings, screen, ship, alien, bullets):
+def update_screen(ai_settings, screen, ship, aliens, bullets):
     # 每次循环时都重绘屏幕
     screen.fill(ai_settings.bg_color)
 
@@ -57,7 +58,7 @@ def update_screen(ai_settings, screen, ship, alien, bullets):
         bullet.draw_bullet()
 
     ship.blitme()
-    alien.blitme()
+    aliens.draw(screen)
 
     # 让最近绘制的屏幕可见
     pygame.display.flip()
@@ -72,3 +73,25 @@ def update_bullets(bullets):
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
+
+def get_number_aliens_x(ai_settings, alien_width):
+    # 计算每行可以容纳多少外星人
+    available_space_x = ai_settings.screen_width -2*alien_width
+    number_aliens_x = int(available_space_x / (2*alien_width))
+    return number_aliens_x
+
+def create_alien(ai_settings, screen, aliens, alien_number):
+    # 创建外星人并放在当前行
+    alien = Alien(ai_settings, screen)
+    alien_width = alien.rect.width
+    alien.x = alien_width + 2*alien_width*alien_number
+    alien.rect.x = alien.x 
+    aliens.add(alien)
+
+def create_fleet(ai_settings, screen, aliens):
+    # 创造外星人群
+    alien = Alien(ai_settings, screen)
+    number_aliens_x = get_number_aliens_x(ai_settings, alien.rect.width)
+    # 创建第一行外星人
+    for alien_number in range(number_aliens_x):
+        create_alien(ai_settings, screen, aliens, alien_number)

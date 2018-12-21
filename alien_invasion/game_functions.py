@@ -5,6 +5,8 @@ __date__ = '2018-12-16 18:20'
 import sys
 import pygame
 
+from time import sleep
+
 from bullet import Bullet
 from alien import Alien
 
@@ -107,7 +109,7 @@ def create_alien(ai_settings, screen, aliens, alien_number, row_number):
     alien.rect.y = alien.rect.height + 2*alien.rect.height*row_number
     aliens.add(alien)
 
-def create_fleet(ai_settings, screen,ship, aliens):
+def create_fleet(ai_settings, screen, ship, aliens):
     # 创造外星人群
     alien = Alien(ai_settings, screen)
     number_aliens_x = get_number_aliens_x(ai_settings, alien.rect.width)
@@ -129,12 +131,44 @@ def change_fleet_direction(ai_settings, aliens):
     for alien in aliens.sprites():
         alien.rect.y += ai_settings.fleet_drop_speed
     ai_settings.fleet_direction *= -1
-    
-def update_aliens(ai_settings, ship, aliens):
+
+def ship_hit(ai_settings, stats, screen, ship, aliens, bullets):
+    # 响应被外星人撞到的飞船
+    if stats.ships_left > 0:
+        # 将ships_left减1
+        stats.ships_left -= 1
+
+        # 清空外星人和子弹列表
+        aliens.empty()
+        bullets.empty()
+
+        # 创建一群新的外星人， 并将飞船放在屏幕底部中央
+        create_fleet(ai_settings, screen, ship, aliens)
+        ship.center_ship()
+
+        # 暂停
+        sleep(0.5)
+    else:
+        stats.game_active = False
+
+def check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets):
+    # 检查是否有外星人到达了屏幕底部
+    screen_rect = screen.get_rect()
+    for alien in aliens.sprites():
+        if alien.rect.bottom >= screen_rect.bottom:
+            # 向飞船被撞到一样进行处理
+            ship_hit(ai_settings, stats, screen, ship, aliens, bullets)
+            break
+
+def update_aliens(ai_settings, stats, screen, ship, aliens, bullets):
+
     # 更新外星人群中所有外星人的位置,并更新调整外星人的位置
     check_fleet_edges(ai_settings, aliens)
     aliens.update()
 
     # 检测外星人和飞船的碰撞
     if pygame.sprite.spritecollideany(ship, aliens):
+        ship_hit(ai_settings, stats, screen, ship, aliens, bullets)
         print("Ship hit!!!")
+    # 检查是否有外星人到达屏幕底部
+    check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets)
